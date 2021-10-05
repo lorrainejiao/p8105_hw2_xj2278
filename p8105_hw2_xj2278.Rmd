@@ -1,0 +1,133 @@
+---
+title: "ggplot 1"
+output: github_document
+---
+
+```{r setup}
+library(tidyverse)
+library(ggridges)
+
+knitr::opts_chunk$set(
+  fig.width = 6, 
+  fig.asp = .6,
+  out.width = "90%")
+```
+
+Load in a dataset that we'll use often. 
+
+```{r}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728", "USC00519397", "USS0023B17S"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2017-01-01",
+    date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(
+      id, 
+      USW00094728 = "CentralPark_NY", 
+      USC00519397 = "Waikiki_HA",
+      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+```
+
+
+
+
+## Scatterplot 
+
+tmax vs tmin
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax))
+```
+
+
+## Let's fancy it up
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = .3) +  #transparent points
+  geom_smooth(se = FALSE) + #adding smooth non-linear line for each color group
+  facet_grid(. ~ name) # grouping only by names
+  
+```
+
+
+Let's make one more scatterplot
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = date, y = tmax)) +
+  geom_point() +
+  facet_grid(. ~ name) +
+  geom_smooth()
+```
+
+
+## Use data manipulation as part of this
+
+```{r}
+weather_df %>%
+  filter(name == "CentralPark_NY") %>%
+  mutate(
+    tmax = tmax * (9 / 5) + 32, 
+    tmin = tmin * (9 / 5) + 32
+  ) %>% 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point() 
+```
+
+## Univariate plots
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmax, fill = name)) + # everything before `ggplot` - using pipe; everything after `ggplot` - using + sign
+  geom_histogram() +
+  facet_grid(. ~ name)
+```
+Let's try some other plots
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmax, fill = name)) +
+  geom_density(alpha = .3)
+```
+
+Still with `tmax` and `name`
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = name, y = tmax)) +
+  geom_boxplot()
+```
+
+Some people like violin plots
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = name, y = tmax, fill = name)) +
+  geom_violin(alpha = .3)
+```
+What about rigdes...
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmax, y = name)) +
+  geom_density_ridges(alpha = .8, scale = .8)
+```
+## Embedding plots
+
+chuck option can adjust the picture output
+
+```{r, fig.width=12}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = .3)
+```
+
+
