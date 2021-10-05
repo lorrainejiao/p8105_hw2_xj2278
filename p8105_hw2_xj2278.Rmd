@@ -1,133 +1,54 @@
 ---
-title: "ggplot 1"
+title: "Homework 2"
 output: github_document
 ---
 
 ```{r setup}
 library(tidyverse)
-library(ggridges)
-
-knitr::opts_chunk$set(
-  fig.width = 6, 
-  fig.asp = .6,
-  out.width = "90%")
+library(readxl)
+library(dplyr)
 ```
 
-Load in a dataset that we'll use often. 
+# Problem 1
+
+Reading and cleaning the Mr. Trash Wheel dataset. 
 
 ```{r}
-weather_df = 
-  rnoaa::meteo_pull_monitors(
-    c("USW00094728", "USC00519397", "USS0023B17S"),
-    var = c("PRCP", "TMIN", "TMAX"), 
-    date_min = "2017-01-01",
-    date_max = "2017-12-31") %>%
-  mutate(
-    name = recode(
-      id, 
-      USW00094728 = "CentralPark_NY", 
-      USC00519397 = "Waikiki_HA",
-      USS0023B17S = "Waterhole_WA"),
-    tmin = tmin / 10,
-    tmax = tmax / 10) %>%
-  select(name, id, everything())
+trash_wheel = read_excel("./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx", 
+                         range = "A2:N408", 
+                         1) %>% 
+  na.omit("Dumpster") %>% 
+  janitor::clean_names() %>% 
+  mutate(sports_balls = round(as.numeric(sports_balls)))
 ```
 
-
-
-
-## Scatterplot 
-
-tmax vs tmin
+Reading and cleaning the precipitation data for 2018. 
 
 ```{r}
-weather_df %>%
-  ggplot(aes(x = tmin, y = tmax))
-```
+precipitation_2018 = read_excel("./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx", 
+                         range = "A2:B14", 
+                         5) %>% 
+  mutate(year = "2018")
 
+precipitation_2019 = read_excel("./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx", 
+                         range = "A2:B8", 
+                         4) %>% 
+  mutate(year = "2019")
 
-## Let's fancy it up
+precipitation =
+  bind_rows(precipitation_2018, precipitation_2019) %>% 
+  janitor::clean_names() %>% 
+  mutate(month = month.name[month])
+``` 
 
-```{r}
-weather_df %>%
-  ggplot(aes(x = tmin, y = tmax, color = name)) +
-  geom_point(alpha = .3) +  #transparent points
-  geom_smooth(se = FALSE) + #adding smooth non-linear line for each color group
-  facet_grid(. ~ name) # grouping only by names
-  
-```
+Write a paragraph about these data; you are encouraged to use inline R. Be sure to note the number of observations in both resulting datasets, and give examples of key variables. For available data, what was the total precipitation in 2018? What was the median number of sports balls in a dumpster in 2019?
 
+The trash wheel dataset has `r nrow(trash_wheel)` observations, and key variables are `r names(trash_wheel)`. The median number of sports balls in a dumpster in 2019 was `r median(pull(trash_wheel, sports_balls), year = "2019")` 
 
-Let's make one more scatterplot
+The precipitation dataset has `r nrow(precipitation)` observations, and key variables are `r names(precipitation)`. The total precipitation in 2018 was `r sum(pull(precipitation_2018, Total))`. 
 
-```{r}
-weather_df %>%
-  ggplot(aes(x = date, y = tmax)) +
-  geom_point() +
-  facet_grid(. ~ name) +
-  geom_smooth()
-```
+# Problem 2
 
-
-## Use data manipulation as part of this
-
-```{r}
-weather_df %>%
-  filter(name == "CentralPark_NY") %>%
-  mutate(
-    tmax = tmax * (9 / 5) + 32, 
-    tmin = tmin * (9 / 5) + 32
-  ) %>% 
-  ggplot(aes(x = tmin, y = tmax)) + 
-  geom_point() 
-```
-
-## Univariate plots
-
-```{r}
-weather_df %>%
-  ggplot(aes(x = tmax, fill = name)) + # everything before `ggplot` - using pipe; everything after `ggplot` - using + sign
-  geom_histogram() +
-  facet_grid(. ~ name)
-```
-Let's try some other plots
-
-```{r}
-weather_df %>%
-  ggplot(aes(x = tmax, fill = name)) +
-  geom_density(alpha = .3)
-```
-
-Still with `tmax` and `name`
-
-```{r}
-weather_df %>%
-  ggplot(aes(x = name, y = tmax)) +
-  geom_boxplot()
-```
-
-Some people like violin plots
-
-```{r}
-weather_df %>%
-  ggplot(aes(x = name, y = tmax, fill = name)) +
-  geom_violin(alpha = .3)
-```
-What about rigdes...
-
-```{r}
-weather_df %>%
-  ggplot(aes(x = tmax, y = name)) +
-  geom_density_ridges(alpha = .8, scale = .8)
-```
-## Embedding plots
-
-chuck option can adjust the picture output
-
-```{r, fig.width=12}
-weather_df %>%
-  ggplot(aes(x = tmin, y = tmax, color = name)) +
-  geom_point(alpha = .3)
-```
+Reading the pols-month dataset. 
 
 
