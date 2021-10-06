@@ -7,6 +7,7 @@ output: github_document
 library(tidyverse)
 library(readxl)
 library(dplyr)
+library(ggplot2)
 ```
 
 # Problem 1
@@ -48,21 +49,18 @@ The precipitation dataset has `r nrow(precipitation)` observations, and key vari
 # Problem 2
 
 Reading the pols-month dataset. 
-
+‘
 
 ```{r}
 pols_month = 
   read_csv("./data/fivethirtyeight_datasets/pols-month.csv") %>% 
   janitor::clean_names() %>% 
   separate(mon, into = c("year", "month", "day")) %>% 
+  mutate(year = as.integer(year), month = as.integer(month), day = as.integer(day)) %>% 
   mutate(month = month.name[as.numeric(month)]) %>% 
-  select(-"day") %>% 
-  pivot_longer(prez_gop:rep_dem,
-               names_to = "president", 
-               values_to = "values") %>% 
-  filter(!president == "prez_dem", !president == "prez_gop")%>% 
-  select(year, month, everything())%>% 
-  mutate(month = substring(month, 0,3)) %>% 
+  mutate(president = ifelse(prez_gop == 1, "gop", "dem")) %>% 
+  select(-"day", -"prez_gop", -"prez_dem") %>% 
+  select(year, month, everything()) %>% 
   mutate(year = as.numeric(year))
 ```
 
@@ -75,11 +73,10 @@ snp =
   mutate(date, date = lubridate::mdy(date)) %>% 
   separate(date, into = c("year", "month", "day")) %>% 
   mutate(year = as.numeric(year)) %>% 
-  mutate(year = ifelse(year>2049, year - 100, year)) %>% 
+  mutate(year = ifelse(year > 2049, year - 100, year)) %>% 
   mutate(month = month.name[as.numeric(month)]) %>% 
   arrange(year, month) %>% 
   select(year, month, everything()) %>% 
-  mutate(month = substring(month, 0,3)) %>% 
   select(-"day")
   
 ```
@@ -93,8 +90,9 @@ unemployment =
                names_to = "month",
                values_to = "unemployment") %>% 
   janitor::clean_names() %>% 
+  mutate(month = month.name[match(month, month.abb)]) %>% 
   arrange(year, month)%>% 
-  mutate(year = as.numeric(year))
+  mutate(year = as.numeric(year)) 
   
 ```
 
@@ -106,4 +104,52 @@ snp_pols = left_join(pols_month, snp, by = c("year", "month"))
 merge_df = left_join(snp_pols, unemployment, by = c("year", "month"))
 ```
 
+# Problem 3
+
+
+
+```{r}
+names = 
+  read_csv("./data/Popular_Baby_Names.csv") %>% 
+  janitor::clean_names() %>% 
+  mutate(ethnicity = str_to_lower(ethnicity), gender = str_to_lower(gender)) %>%
+  mutate(ethnicity = recode(ethnicity, "asian and paci" = "asian and pacific islander", "black non hisp" = "black non hispanic", "white non hisp" = "white non hispanic")) %>% 
+  mutate(childs_first_name = str_to_title(childs_first_name)) %>% 
+  distinct()
+```
+
+```{r}
+olivia = 
+  names %>% 
+  filter(childs_first_name == "Olivia") %>% 
+  select(-"gender", -"childs_first_name", -"count") %>% 
+  arrange(year_of_birth) %>% 
+  pivot_wider(
+    names_from = "year_of_birth", 
+    values_from = "rank"
+  )
+
+```
+
+```{r}
+popular =
+  names %>% 
+  filter(gender == "male", rank == "1") %>% 
+  select(-"gender", -"count", -"rank") %>% 
+  arrange(year_of_birth) %>% 
+  pivot_wider(
+    names_from = "year_of_birth",
+    values_from = "childs_first_name"
+  )
+```
+
+
+
+```{r}
+male_white_non_hispanic_2016 = 
+  names %>% 
+  filter(gender == "male", year_of_birth == "2016", ethnicity == "white non hispanic") %>% 
+  ggplot(aes(x = rank, y = count)) +
+  geom_point()
+```
 
