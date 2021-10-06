@@ -52,3 +52,58 @@ The precipitation dataset has `r nrow(precipitation)` observations, and key vari
 Reading the pols-month dataset. 
 
 
+```{r}
+pols_month = 
+  read_csv("./data/fivethirtyeight_datasets/pols-month.csv") %>% 
+  janitor::clean_names() %>% 
+  separate(mon, into = c("year", "month", "day")) %>% 
+  mutate(month = month.name[as.numeric(month)]) %>% 
+  select(-"day") %>% 
+  pivot_longer(prez_gop:rep_dem,
+               names_to = "president", 
+               values_to = "values") %>% 
+  filter(!president == "prez_dem", !president == "prez_gop")%>% 
+  select(year, month, everything())%>% 
+  mutate(month = substring(month, 0,3))
+```
+
+Cleaning the snp dataset. 
+
+```{r}
+snp = 
+  read_csv("./data/fivethirtyeight_datasets/snp.csv") %>% 
+  janitor::clean_names() %>% 
+  separate(date, into = c("year", "month", "day")) %>% 
+  mutate(year, year = as.numeric(year) + 2000) %>% 
+  mutate(month = month.name[as.numeric(month)]) %>% 
+  arrange(year, month) %>% 
+  select(year, month, everything()) %>% 
+  mutate(month = substring(month, 0,3)) %>% 
+  mutate(year = as.character(year)) %>% 
+  select(-"day")
+  
+```
+
+Cleaning the unemployment data. 
+
+```{r}
+unemployment = 
+  read_csv("./data/fivethirtyeight_datasets/unemployment.csv") %>% 
+  pivot_longer(Jan:Dec,
+               names_to = "month",
+               values_to = "unemployment") %>% 
+  janitor::clean_names() %>% 
+  arrange(year, month) %>% 
+  mutate(year = as.character(year))
+  
+```
+
+Joining dataframes. 
+
+```{r}
+snp_pols = left_join(pols_month, snp, by = c("year", "month"))
+
+merge_df = left_join(snp_pols, unemployment, by = c("year", "month"))
+```
+
+
