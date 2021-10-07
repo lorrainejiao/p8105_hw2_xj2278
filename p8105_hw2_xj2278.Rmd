@@ -16,9 +16,9 @@ library(ggplot2)
 Reading the Mr. Trash Wheel dataset, and cleaning it by specifying the sheet, omitting non-data entries, changing variable names, omitting rows that do not include dumpster-specific data, and rounding the number of sports balls to the nearest integer. 
 
 ```{r}
-trash_wheel = read_excel("./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx", 
+trash_wheel = read_excel("./data/Trash-Wheel-Collection-Totals-7-2021-sept.xlsx", 
                          range = "A2:N408", 
-                         1) %>% 
+                         "Mr. Trash Wheel") %>% 
   na.omit("Dumpster") %>% 
   janitor::clean_names() %>% 
   mutate(sports_balls = round(as.numeric(sports_balls)))
@@ -33,14 +33,14 @@ The above table is a 6-row preview of the cleaned Mr. Trash Wheel dataset.
 Reading and cleaning the precipitation data for 2018 and 2019 through omitting rows without precipitation data, adding a `year` variable, combining precipitation datasets and converting month to a character variable. 
 
 ```{r}
-precipitation_2018 = read_excel("./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx", 
+precipitation_2018 = read_excel("./data/Trash-Wheel-Collection-Totals-7-2021-sept.xlsx", 
                          range = "A2:B14", 
-                         5) %>% 
+                         "2018 Precipitation") %>% 
   mutate(year = "2018")
 
-precipitation_2019 = read_excel("./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx", 
+precipitation_2019 = read_excel("./data/Trash-Wheel-Collection-Totals-7-2021-sept.xlsx", 
                          range = "A2:B8", 
-                         4) %>% 
+                         "2019 Precipitation") %>% 
   mutate(year = "2019")
 
 precipitation =
