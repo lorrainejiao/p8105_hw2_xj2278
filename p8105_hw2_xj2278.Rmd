@@ -12,7 +12,8 @@ library(ggplot2)
 
 # Problem 1
 
-Reading and cleaning the Mr. Trash Wheel dataset. 
+## Mr. Trash Wheel Dataset 
+Reading the Mr. Trash Wheel dataset, and cleaning it by specifying the sheet, omitting non-data entries, changing variable names, omitting rows that do not include dumpster-specific data, and rounding the number of sports balls to the nearest integer. 
 
 ```{r}
 trash_wheel = read_excel("./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx", 
@@ -21,9 +22,15 @@ trash_wheel = read_excel("./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
   na.omit("Dumpster") %>% 
   janitor::clean_names() %>% 
   mutate(sports_balls = round(as.numeric(sports_balls)))
+
+head(trash_wheel) %>% 
+  knitr::kable()
 ```
 
-Reading and cleaning the precipitation data for 2018. 
+The above table is a 6-row preview of the cleaned Mr. Trash Wheel dataset. 
+
+## Precipitation Datasets
+Reading and cleaning the precipitation data for 2018 and 2019 through omitting rows without precipitation data, adding a `year` variable, combining precipitation datasets and converting month to a character variable. 
 
 ```{r}
 precipitation_2018 = read_excel("./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx", 
@@ -40,17 +47,18 @@ precipitation =
   bind_rows(precipitation_2018, precipitation_2019) %>% 
   janitor::clean_names() %>% 
   mutate(month = month.name[month])
+
+head(precipitation) %>% 
+  knitr::kable()
 ``` 
 
-The trash wheel dataset has `r nrow(trash_wheel)` observations, and key variables are `r names(trash_wheel)`. The median number of sports balls in a dumpster in 2019 was `r median(pull(filter(trash_wheel, year == 2019), sports_balls))` . 
+The trash wheel dataset has `r nrow(trash_wheel)` observations and `r ncol(trash_wheel)` variables, and key variables are `r names(trash_wheel)`. The median number of sports balls in a dumpster in 2019 was `r median(pull(filter(trash_wheel, year == 2019), sports_balls))` balls. 
 
-The precipitation dataset has `r nrow(precipitation)` observations, and key variables are `r names(precipitation)`. The total precipitation in 2018 was `r sum(pull(precipitation_2018, Total))`. 
+The precipitation dataset has `r nrow(precipitation)` observations, and key variables are `r names(precipitation)`. The precipitation data ranges from `r min(pull(precipitation, total))` to `r max(pull(precipitation, total))`. The total precipitation in 2018 was `r sum(pull(precipitation_2018, Total))`. 
 
 # Problem 2
-
-Reading the pols-month dataset. 
-‘
-
+## pols-month Dataset
+Clean the data in pols-month.csv through breaking up the variable mon into year, month, and day, replacing month number with month name, creating a president variable. 
 ```{r}
 pols_month = 
   read_csv("./data/fivethirtyeight_datasets/pols-month.csv") %>% 
@@ -61,11 +69,14 @@ pols_month =
   mutate(president = ifelse(prez_gop == 1, "gop", "dem")) %>% 
   select(-"day", -"prez_gop", -"prez_dem") %>% 
   select(year, month, everything()) %>% 
-  mutate(year = as.numeric(year))
+  mutate(year = as.numeric(year)) 
+
+head(pols_month) %>% 
+  knitr::kable()
 ```
 
-Cleaning the snp dataset. 
-
+## snp Dataset
+Cleaning the data in snp.csv by breaking up the variable date into year, month, and day, and replacing month number with month name.
 ```{r}
 snp = 
   read_csv("./data/fivethirtyeight_datasets/snp.csv") %>% 
@@ -79,10 +90,11 @@ snp =
   select(year, month, everything()) %>% 
   select(-"day")
   
+head(snp) %>% 
+  knitr::kable()
 ```
-
-Cleaning the unemployment data. 
-
+## Unemployment Data
+Cleaning the unemployment data so that it has the same names of the key variables, and ensuring that key variables month and year take the same values.
 ```{r}
 unemployment = 
   read_csv("./data/fivethirtyeight_datasets/unemployment.csv") %>% 
@@ -93,20 +105,32 @@ unemployment =
   mutate(month = month.name[match(month, month.abb)]) %>% 
   arrange(year, month)%>% 
   mutate(year = as.numeric(year)) 
-  
+
+head(unemployment) %>% 
+  knitr::kable()
 ```
-
-Joining dataframes. 
-
+## Joining Datasets
+Merging snp into pols, and merging unemployment into the resulting dataframe.
 ```{r}
 snp_pols = left_join(pols_month, snp, by = c("year", "month"))
 
 merge_df = left_join(snp_pols, unemployment, by = c("year", "month"))
+
+head(merge_df) %>% 
+  knitr::kable()
 ```
 
+The `pols-month.csv` dataset has `r nrow(pols_month)` observations and `r ncol(pols_month)` variables related to the number of national politicians who are democratic or republican. Variables include `r names(pols_month)`. The year ranges from `r min(pull(pols_month, year))` to `r max(pull(pols_month, year))`. The new `president` column indicates that whether the president was republican or democratic on the associated date. 
+
+The `snp.csv` dataset has `r nrow(snp)` observations and `r ncol(snp)` variables related to Standard & Poor’s stock market index. Variables include `r names(snp)`. The year ranges from `r min(pull(snp, year))` to `r max(pull(snp, year))`. 
+
+The `unemployment.csv` dataset has `r nrow(unemployment)` observations and `r ncol(unemployment)` variables of the percentages of unemployment. Variables include `r names(unemployment)`. The year ranges from `r min(pull(unemployment, year))` to `r max(pull(unemployment, year))`.
+
+The resulting final dataset has `r nrow(merge_df)` observations and `r ncol(merge_df)` variables. Variables include `r names(merge_df)`. The year ranges from `r min(pull(merge_df, year))` to `r max(pull(merge_df, year))`. 
+
 # Problem 3
-
-
+## Tidying
+Load and tidy the data by changing names in the ethnicity column, changing the case structure in the child's first name column, and removing duplicated rows. 
 
 ```{r}
 names = 
@@ -116,8 +140,12 @@ names =
   mutate(ethnicity = recode(ethnicity, "asian and paci" = "asian and pacific islander", "black non hisp" = "black non hispanic", "white non hisp" = "white non hispanic")) %>% 
   mutate(childs_first_name = str_to_title(childs_first_name)) %>% 
   distinct()
-```
 
+head(names) %>% 
+  knitr::kable()
+```
+## Rank in Popularity of the Name “Olivia” Over Time
+To show the popularity of "Olivia" over time, we need to create a subtable from the original `names` dataset which only contains data relating to the child's first name "Olivia". We also need to make it into a wider dataframe which has rows for ethnicities and columns for year in order to see the trend of ranks over time. 
 ```{r}
 olivia = 
   names %>% 
@@ -126,10 +154,15 @@ olivia =
   arrange(year_of_birth) %>% 
   pivot_wider(
     names_from = "year_of_birth", 
-    values_from = "rank"
-  )
+    values_from = "rank")
 
+head(olivia) %>% 
+  knitr::kable()
 ```
+
+## Most Popular Name Among Male Children Over Time
+
+To show the most popular name among male children over time, we need to create a sub-dataframe from the original `names` dataset, and it should only contains data relating to all boy's names ranking 1 in each ethnicity group. We also need to make it into a wider dataframe which has rows for ethnicity and columns for year in order to see the trend of popular names over time. 
 
 ```{r}
 popular =
@@ -141,15 +174,28 @@ popular =
     names_from = "year_of_birth",
     values_from = "childs_first_name"
   )
+
+head(popular) %>% 
+  knitr::kable()
 ```
 
+## Scatterplot for Male, White Non-hispanic Children Born in 2016
 
+A sub-dataset is made by filtering for only male, 2016 and white non-hispanic.  
 
 ```{r}
 male_white_non_hispanic_2016 = 
   names %>% 
-  filter(gender == "male", year_of_birth == "2016", ethnicity == "white non hispanic") %>% 
+  filter(gender == "male", year_of_birth == "2016", ethnicity == "white non hispanic")
+
+male_white_non_hispanic_2016 %>% 
   ggplot(aes(x = rank, y = count)) +
-  geom_point()
+  geom_point(alpha = .3) +
+  ggtitle("Count vs. Rank for Male, White Non-Hispanic Children Born in 2016") +
+  xlab("Rank in Popularity of that Name") +
+  ylab("Number of Children with a Name") +
+  theme_minimal()
+
+ggsave("male_white_non_hispanic_2016.pdf")
 ```
 
